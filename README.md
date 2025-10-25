@@ -30,7 +30,7 @@ Below are some things that will be useful in attempting to understand the MS. it
 
 [**Interactive Flow Chart**](https://tisunfortunate.github.io/CH-MIS-main-storage/Flow/flowchart.html)
 
-
+[**Component Checklist**](https://tisunfortunate.github.io/CH-MIS-main-storage/checklist.html)
 
 
 
