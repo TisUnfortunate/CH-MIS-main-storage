@@ -17,7 +17,7 @@ This system detects overflow from the MIS and the CH, and handles each in detail
 This system will also have 72 bulk slices(~1mil per half slice), which are fed by box sorters. 
 There will be compacting support, and it will run on var sorting to produce single-item type boxes. 
 
-[Essay Here](./System_Explanation.md)
+[Essay Here](./System_Explanation_V2.md)
 
 ---
 ## Resources
