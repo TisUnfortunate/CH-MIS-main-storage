@@ -32,5 +32,5 @@ then it compacts into an empty box. Any non-full boxes of compacted items are ad
 
 ---
 ## High Resolution Whitelister
-![Component 5](./Component&20Renders/render_2wt_High_Res_Whitelister.png)
+![Component 5](./Component%20Renders/render_2wt_High_Res_Whitelister.png)
 **Description**: This component is responsible for routing inputs(single item type boxes) to one of various destinations(demux) at 32gt. There are two destinations within each slice, and boxes are directed within the slice based on an 'isFull' check that occurs during initial key generation. Full boxes are output by the droppers, and partials end up in the barrels. See the [Interactive Flow Chart](https://tisunfortunate.github.io/CH-MIS-main-storage/Flow/flowchart.html) for more details on the utility of this feature.
