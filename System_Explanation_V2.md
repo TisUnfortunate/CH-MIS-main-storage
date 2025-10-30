@@ -122,41 +122,57 @@ and allow the UI to have the features it does.
 
 <h3 id="cart-cycvar" title="Cycvar: a system that takes as input boxes, and then runs them through a number of slices. each slice grabs an item type from the first box it recieves and sets it as a filter. every box in the set then checks against that filter, and any of that item are removed, and merged into box(es) in that slice. in this way, you guarantee all of any item type within an input end up in the same place.
   Cart Cycvar: a cycvar system that uses carts to accelerate the unloading and loading processes.">Cart Cycvar</h3>
-Blurb 
+Cart Cycvar is an ideal output variable sorting system optimized to deal with large inputs with high item type quantities.
 
 #### Design Goals:
-N/A
+- Improve cycvar weakness of high cycle latency
+- fast cycle reset
+- compact slices
+- ideal output
 #### Implementation:
-N/A
+The system uses a grouper-based cycle handler, which effectively means every box checks every grouper at gt, rather than every slice. this significantly reduces cycle time, as boxes do not ever wait for a box to unload to check if they they need to be unloaded. all boxes not necessary for the cycle are recycled to the input, and wait for the next cycle. the slice is a 3wt cart cycvar, which has a 7gt cart reset, which translates to ~7.2x HS. At the end of every cycle, all slices are reset and output partial boxes. the next cycle begins during the reset to reduce downtime. reset logic works in such a way to guarantee all boxes check all groupers, to guarantee ideal output. Unstackables are removed by two LUF systems, one before the buffer, and one that every box is processed through after leaving a slice. 
 #### Meeting Goals:
-N/A
+The system meets the goals satisfactorily, with the caveat that global LUF is objectively suboptimal. it adds unnecessary travel time to the boxes, making the reset unnecessarily long. There is currently an unresolved bug that happens rarely where an extra partial is output with large inputs. the slice is 3wt, as is the grouper that feeds it. that being said, the slice is very tall, which is not my favorite.
 
 <h3 id="whitelister" title="Whitelister: A structure filters for a certain subset of items. 
 high resolution whitelister: A whitelister which is made of a series of whitelisters, each which perform different checks. These checks are serialized, and once a check is successful, the rest of the checks are bypassed.">High Resolution Whitelister</h3>
-Blurb 
+The whitelister routes carts to their various destinations. 
 
 #### Design Goals:
-N/A
+- include SS check
+- small footprint
+- individual routing for each whitelist(High Resolution)
+- separate output for full boxes
+- empty cart protection
 #### Implementation:
-N/A
+When a box arrives, it is placed, and an isfull check is ran. the box is then broken and placed in a cart along with a key. upon being accepted to a slice, box and key are recombined, and after recombination, if the box is full, the signal will have propogated to its slice, and spit the box out of the dropper instead of sending it to the barrel. if a cart is spawned, and no key or box are picked up, it will receive 5 blockers, and pass harmlessly through the system. the unwhitelisted slice at the end is locked to prevent and blocker loss. the cart and blockers are returned to the input. 
 #### Meeting Goals:
-N/A
+All goals are met. empty cart protection is thorough, the whitelister is very small, as is recombination. each slice has its own routing, and separates full and partial boxes. it is a fairly long whitelister, as each whitelister is 2w, but the front end is reasonably compact. 
+#### Further Notes:
+1wt slice is possible, though would not work with my current matrix unloader, and would make a global isfull check more difficult. 
 
-<h3 id="matrix-unloader" title="Matrix Unloading: a method of parallelizing the sorting of items, usually found in encoded tech. it parallelizes by unloading one item type per row of filters, referred to as a lane here. Sorting is used to determine where an item needs to be unloaded. ">Matrix Unlaoder</h3>
-Blurb 
-
+<h3 id="matrix-unloader" title="Matrix Unloading: a method of parallelizing the sorting of items, usually found in encoded tech. it parallelizes by unloading one item type per row of filters, referred to as a lane here. Sorting is used to determine where an item needs to be unloaded. ">Matrix Unloader</h3>
+this system is made of 8 unloaders, one for each lane of items. the unloaders are each fed by their own whitelister, to ensure all items end up in the correct location. 
 #### Design Goals:
-N/A
+- parallelize unloading
+- have overflow end up in single item type boxes
+- batch items to reduce lag
+- reasonable in size
+
 #### Implementation:
-N/A
+This system attaches directly to a 2wt whitelister, and can theoretically accept boxes at hopper speed. each slice can buffer over 70 boxes, not that any slice will ever deal with this number of boxes. since one box unloads into one lane, if overflow from a lane is detected, it's source is known. each slice has an overflow signal input, which breaks the box the is currently unloading and outputs the box into the item output, which allows it to be sent to a simple device at the end of its lane that will recombine its overflow into it, and then output the box. further, the system will not place boxes for a cycle after the box is broken, to give the overflow time to filter back into the box.
 #### Meeting Goals:
-N/A
+This system works in a reasonable footprint, and deals with overflow exactly as I had intended. it parallelizes up to 8x depending on the item input, and while on average will be slower than a set based or svar based unloader, its simplicity and overflow features more than make up for its expected speed loss. 
+#### Future Considerations:
+A 1wt slice may be possible, and worth looking into. could then reduce the sice of the whitelister to 1wt as well. However, that would make routing items incredibly difficult. 
 
 <h3 id="temp" title="Temp: a structure meant to store partial single-item type boxes, and when it receives an item, it searches its contents for any box with the same item type. If there is a matching box, it outputs it. if not, it inputs the box it received.">Temp Storage</h3>
-Currently Intending to use my non-encoded disk drive, which stores up to 390 unique item types. a search process and output takes 400-800gt
+Currently intending to use my non-encoded disk drive, which stores up to 390 unique item types. a search process and output takes 400-800gt
 
 #### Design Goals:
-N/A
+- Reasonable Search time
+- High Item type capacity
+- resonable footprint
 #### Implementation:
 N/A
 #### Meeting Goals:
